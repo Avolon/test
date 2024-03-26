@@ -1,0 +1,25 @@
+yandex_compute_instance.vms[1]: Creating...
+yandex_compute_instance.vms[2]: Creating...
+yandex_compute_instance.vms[0]: Creating...
+╷
+│ Error: Error while requesting API to create instance: server-request-id = d7e7e1c6-c640-468d-88fc-edf7fbc242fa server-trace-id = c0df527592cb69a9:95439a6e4b62ca0b:c0df527592cb69a9:1 client-request-id = 449e4949-8600-445e-977d-5479863295a9 client-trace-id = 46249b10-9bce-48e9-8896-17a9b7083975 rpc error: code = NotFound desc = Subnet default-ru-central1-a not found
+│
+│   with yandex_compute_instance.vms[1],
+│   on main.tf line 45, in resource "yandex_compute_instance" "vms":
+│   45: resource "yandex_compute_instance" "vms" {
+│
+╵
+╷
+│ Error: Error while requesting API to create instance: server-request-id = 4cd9998e-9385-4804-9753-f26fcb9fd5bd server-trace-id = fc2de1f2f106514d:46896528c297e0de:fc2de1f2f106514d:1 client-request-id = 096bacd3-9c1c-4b27-98cf-29f58d77387c client-trace-id = 46249b10-9bce-48e9-8896-17a9b7083975 rpc error: code = NotFound desc = Subnet default-ru-central1-a not found
+│
+│   with yandex_compute_instance.vms[0],
+│   on main.tf line 45, in resource "yandex_compute_instance" "vms":
+│   45: resource "yandex_compute_instance" "vms" {
+│
+╵
+╷
+│ Error: Error while requesting API to create instance: server-request-id = 30f8836f-42d3-4f71-891f-4f9ee718cee8 server-trace-id = 4f7a44600fa2e0f2:caf866874828311b:4f7a44600fa2e0f2:1 client-request-id = 154a2c77-84ee-4a94-9a77-4b340a2bf8c7 client-trace-id = 46249b10-9bce-48e9-8896-17a9b7083975 rpc error: code = NotFound desc = Subnet default-ru-central1-a not found
+│
+│   with yandex_compute_instance.vms[2],
+│   on main.tf line 45, in resource "yandex_compute_instance" "vms":
+│   45: resource "yandex_compute_instance" "vms" {
