@@ -20,18 +20,10 @@ variable "vm_names" {
   default     = ["vm1", "vm2", "vm3"]
 }
 
-variable "internal_ips" {
-  type        = map(string)
-  description = "Список внутренних IP-адресов для виртуальных машин"
-  default     = {
-    vm1 = "192.168.10.1"
-    vm2 = "192.168.10.2"
-    vm3 = "192.168.10.3"
-  }
-}
-
 variable "folder_id" {
   description = "ID папки, где будут создаваться виртуальные машины"
+  type        = string
+  default     = "b1g47cmuasifjjhsj7ah"
 }
 
 data "yandex_compute_image" "ubuntu_image" {
@@ -42,6 +34,29 @@ data "yandex_compute_image" "centos_image" {
   family = "centos-stream-8"
 }
 
+resource "yandex_vpc_network" "network" {
+  name      = "my-network"
+  folder_id = var.folder_id
+}
+
+resource "yandex_vpc_subnet" "internal_subnet" {
+  count      = length(var.vm_names)
+  name       = "internal-subnet-${var.vm_names[count.index]}"
+  folder_id  = var.folder_id
+  zone       = "ru-central1-a"
+  network_id = yandex_vpc_network.network.id
+  v4_cidr_blocks = [
+    "192.168.${10 + count.index}.0/24",
+  ]
+}
+
+#resource "yandex_vpc_address" "external_address" {
+#  count       = length(var.vm_names)
+#  name        = "external-address-${var.vm_names[count.index]}"
+#  folder_id   = var.folder_id
+#  description = "External address for ${var.vm_names[count.index]}"
+#}
+
 resource "yandex_compute_instance" "vms" {
   count = length(var.vm_names)
 
@@ -49,11 +64,10 @@ resource "yandex_compute_instance" "vms" {
   zone = "ru-central1-a"
 
   resources {
-    cores  = 2
-    memory = 2
-    core_fraction = 20 #отключаемая и горонтированный процент
-  }
-
+    cores         = 2
+    memory        = 2
+    core_fraction = 20
+}
   boot_disk {
     initialize_params {
       image_id = var.vm_names[count.index] == "vm3" ? data.yandex_compute_image.centos_image.id : data.yandex_compute_image.ubuntu_image.id
@@ -62,11 +76,15 @@ resource "yandex_compute_instance" "vms" {
   }
 
   network_interface {
-    subnet_id = "default-ru-central1-a"
-    ip_address = var.internal_ips[var.vm_names[count.index]]
+    subnet_id = yandex_vpc_subnet.internal_subnet[count.index].id
+    nat       = true
+#    nat_ip_address = yandex_vpc_address.external_address[count.index].address
   }
 
   metadata = {
+    user-data = "${file("/home/avolon/cloud-config")}"
     ssh-keys = "avolon:${file("~/.ssh/id_rsa.pub")}"
+#   serial-port-enable = "true"
+
   }
 }
