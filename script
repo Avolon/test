@@ -1,0 +1,65 @@
+#!/bin/bash
+
+# Путь к вашему Service Account Key File
+SERVICE_ACCOUNT_KEY_FILE="/path/to/your/service-account-key-file.json"
+
+# Установить переменную окружения, указывающую на ваш Service Account Key File
+export YC_TOKEN=$(yc iam create-token --service-account-key-file=$SERVICE_ACCOUNT_KEY_FILE)
+
+# Получить список ваших виртуальных машин из Яндекс.Облака
+# Вам может потребоваться установить yandex-sdk, чтобы воспользоваться этим скриптом
+# pip install yandex-sdk
+
+# Имя вашего облака
+CLOUD_NAME="your-cloud-name"
+# ID вашей папки
+FOLDER_ID="your-folder-id"
+# Имя вашей сети
+NETWORK_NAME="your-network-name"
+# Имя вашей подсети
+SUBNET_NAME="your-subnet-name"
+# Имя вашей группы безопасности
+SECURITY_GROUP_NAME="your-security-group-name"
+
+# Получить список VM из вашей папки
+# Замените yandex-sdk на соответствующий путь к yandex-sdk
+VM_LIST=$(yandex-sdk resource-manager folder list-vms --folder-id "$FOLDER_ID")
+
+# Создать начальную структуру JSON для инвентаризации
+cat <<EOF
+{
+  "all": {
+    "hosts": {
+EOF
+
+# Проход по каждой VM в списке
+for VM_ID in $(echo "$VM_LIST" | jq -r '.[] | .id'); do
+  # Получить информацию о VM
+  VM_INFO=$(yandex-sdk resource-manager folder get-vm --folder-id "$FOLDER_ID" --id "$VM_ID")
+
+  # Получить внутренний IP адрес VM
+  INTERNAL_IP=$(echo "$VM_INFO" | jq -r '.network_interfaces | .[0].primary_v4_address | .one_to_one_nat.address')
+
+  # Получить внешний IP адрес VM
+  EXTERNAL_IP=$(echo "$VM_INFO" | jq -r '.network_interfaces | .[0].primary_v4_address | .address')
+
+  # Получить имя VM
+  VM_NAME=$(echo "$VM_INFO" | jq -r '.name')
+
+  # Вывести информацию о VM в формате Ansible
+  cat <<EOF
+      "$VM_NAME": {
+        "ansible_host": "$INTERNAL_IP",
+        "external_ip": "$EXTERNAL_IP",
+        "ansible_user": "your_ssh_user",
+        "ansible_ssh_private_key_file": "/path/to/your/private/key"
+      },
+EOF
+done
+
+# Закрыть структуру JSON
+cat <<EOF
+    }
+  }
+}
+EOF
